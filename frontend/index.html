@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="TimeLock BSC 固定时间锁仓与 OTC 受益人转移页面">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; connect-src 'self' http://127.0.0.1:8545 http://localhost:8545 https://bsc-dataseed.bnbchain.org https://data-seed-prebsc-1-s1.bnbchain.org:8545; object-src 'none'; base-uri 'none'; form-action 'self'">
+    <link rel="icon" href="data:,">
+    <title>TimeLock 固定锁仓</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+    <div>
+        <p class="eyebrow">BSC / Flap 税币</p>
+        <h1>TimeLock 固定锁仓</h1>
+    </div>
+    <div class="topbar-actions">
+        <label class="network-picker">网络
+            <select id="networkSelect" aria-label="选择网络">
+                <option value="mainnet">BSC 主网</option>
+                <option value="testnet">BSC 测试网</option>
+                <option value="local">本地 Anvil</option>
+            </select>
+        </label>
+        <label class="network-picker hidden" id="walletPicker">钱包
+            <select id="walletSelect" aria-label="选择钱包"></select>
+        </label>
+        <button id="connectButton" class="button primary" type="button">连接钱包</button>
+    </div>
+</header>
+
+<main class="page-shell">
+    <section id="globalNotice" class="notice hidden" role="status"></section>
+
+    <section class="wallet-strip panel">
+        <div>
+            <span class="label">当前钱包</span>
+            <strong id="accountValue">未连接</strong>
+        </div>
+        <div>
+            <span class="label">BNB / 原生币余额</span>
+            <strong id="nativeBalanceValue">—</strong>
+        </div>
+        <div>
+            <span class="label">链上网络</span>
+            <strong id="chainValue">未检测</strong>
+        </div>
+        <div>
+            <span class="label">TimeLock 地址</span>
+            <strong id="contractValue">未配置</strong>
+        </div>
+    </section>
+
+    <div class="grid two-columns">
+        <section class="panel" id="lockPanel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">1 / 创建锁仓</p>
+                    <h2>固定时间锁定本金</h2>
+                </div>
+                <span class="badge">无需管理员</span>
+            </div>
+            <form id="lockForm" novalidate>
+                <label>代币合约地址
+                    <input id="tokenAddress" type="text" inputmode="text" autocomplete="off" placeholder="0x..." required>
+                </label>
+                <div id="tokenMeta" class="token-meta muted">输入地址后读取代币信息。</div>
+                <div class="amount-row">
+                    <label>锁仓数量
+                        <input id="amountInput" type="text" inputmode="decimal" placeholder="例如 1000000" required>
+                    </label>
+                    <button id="maxButton" class="button secondary compact" type="button" disabled>最大</button>
+                </div>
+                <div id="amountHint" class="field-hint"></div>
+                <label>解锁时间（Asia/Shanghai）
+                    <input id="unlockInput" type="datetime-local" required>
+                </label>
+                <div id="unlockPreview" class="field-hint"></div>
+                <div id="unlockWarning" class="warning hidden"></div>
+                <div class="owner-summary">
+                    <span class="label">锁仓所有者（当前钱包）</span>
+                    <strong id="creationOwner" class="address">连接钱包后自动确定</strong>
+                    <p class="small-note">创建后归自己所有。需要转移时，在锁仓列表点击“转移所有权”。</p>
+                </div>
+                <button id="lockSubmit" class="button primary wide" type="submit" disabled>检查并创建锁仓</button>
+            </form>
+            <p class="small-note">先授权本次所需数量，再调用锁仓。不会发起无限授权。</p>
+        </section>
+
+        <section class="panel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">2 / 我的锁仓</p>
+                    <h2 id="locksHeading">我的锁仓</h2>
+                </div>
+                <button id="refreshButton" class="button secondary compact" type="button">刷新</button>
+            </div>
+            <form id="addressSearchForm" class="lookup-box">
+                <label>按钱包地址查看全部锁仓
+                    <input id="addressSearchInput" type="text" autocomplete="off" spellcheck="false" placeholder="输入钱包地址 0x..." aria-describedby="addressSearchHint">
+                </label>
+                <button id="addressSearchButton" class="button secondary" type="submit">查询</button>
+                <button id="showMineButton" class="button secondary" type="button" disabled>查看我的</button>
+            </form>
+            <p id="addressSearchHint" class="field-hint">连接钱包后自动显示你的全部锁仓；也可以直接输入地址查询，无需记住编号。</p>
+            <p id="locksOwner" class="address hidden"></p>
+            <div id="locksEmpty" class="empty-state" role="status">连接钱包自动加载，或输入地址查询。</div>
+            <div class="table-wrap">
+                <table id="locksTable" class="locks-table hidden">
+                    <thead>
+                    <tr>
+                        <th>编号</th><th>代币</th><th>数量</th><th>解锁时间</th><th>状态</th><th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="locksBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <section class="panel activity-panel" aria-labelledby="activityHeading">
+        <h2 id="activityHeading">交易记录</h2>
+        <p id="activityEmpty" class="small-note">本页发起的交易会显示在这里。</p>
+        <ol id="activityList" class="activity-list" aria-live="polite"></ol>
+    </section>
+
+    <section class="panel safety-panel">
+        <h2>安全提示</h2>
+        <ul>
+            <li>页面只通过浏览器钱包签名，不接触或保存私钥，不使用 localStorage。</li>
+            <li>不要直接把代币转到 TimeLock 地址；没有记录的直接转入无法取回。</li>
+            <li>Flap 买卖税通常在 Bonding Curve 或 DEX 主池交易触发；锁仓和提现仍会检查实际到账。</li>
+            <li>转让只交接锁的受益权，不收款、不托管 OTC 价款；买卖双方需要另行约定交割。</li>
+            <li>解锁时间创建后固定，当前合约不支持延期。这里只管理本金，锁仓期间分红不会自动分配。</li>
+        </ul>
+    </section>
+</main>
+
+<dialog id="confirmDialog" class="confirm-dialog" aria-labelledby="confirmTitle">
+    <form method="dialog">
+        <h2 id="confirmTitle">请确认</h2>
+        <div id="confirmBody" class="confirm-body"></div>
+        <label id="dialogField" class="hidden">新所有者地址
+            <input id="dialogAddress" type="text" autocomplete="off" spellcheck="false" placeholder="0x...">
+        </label>
+        <p id="dialogError" class="dialog-error hidden" role="alert"></p>
+        <div class="dialog-actions">
+            <button id="confirmCancel" class="button secondary" value="cancel" formnovalidate>取消</button>
+            <button id="confirmOkay" class="button primary" value="confirm">确认</button>
+        </div>
+    </form>
+</dialog>
+
+<script src="vendor/ethers.umd.min.js"></script>
+<script src="config.js"></script>
+<script src="abi.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

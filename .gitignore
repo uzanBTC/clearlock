@@ -1,0 +1,8 @@
+.env
+out/
+cache/
+broadcast/
+lib/
+.DS_Store
+*.log
+frontend/test-addresses.tmp
