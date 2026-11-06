@@ -141,19 +141,21 @@ withdraw(lockId)
 
 不要直接把代币转到 TimeLock 地址。直接转入没有对应 `lockId`，合约没有 rescue 或 sweep 函数，无法取回。
 
-## 主网流程
+## BSC 主网
 
-测试网完整走通后，再使用主网 RPC 部署：
+当前无事件版本已部署到 BSC 主网（chain ID `56`）：[0xDa8C53c3b3E033cF6f3CDD63eaB0F533D2A80bEA](https://bscscan.com/address/0xDa8C53c3b3E033cF6f3CDD63eaB0F533D2A80bEA)。链上字节码已与当前编译产物核对，源码已通过 Sourcify 匹配验证。部署交易、实际费用和验证详情见 [`deployments/mainnet.md`](deployments/mainnet.md)。使用下方本地页面即可连接此合约。
+
+需要独立部署新实例时，使用主网 RPC：
 
 ```bash
 forge script script/Deploy.s.sol --rpc-url $BSC_MAINNET_RPC --broadcast --verify
 ```
 
-主网部署后先用少量真实代币完成授权、锁仓、转让和提取，再锁正式数量，并把信息记录到 `deployments/mainnet.md`。
+主网首次使用时，先用少量目标代币完成授权、锁仓、转让和提取，再锁正式数量。本次部署未操作真实代币。
 
 ## 本地操作页面
 
-纯静态操作页面位于 [`frontend/`](frontend/)，使用本地打包的 ethers v6 和浏览器钱包调用 TimeLock。无需构建、域名或后端。顶部可选择 BSC 主网（56，默认）、BSC 测试网（97）和本地 Anvil（31337）。测试网和默认 Anvil 部署地址已配置；主网地址留空，由你部署并核实后填入 [`frontend/config.js`](frontend/config.js) 的 `mainnet.contractAddress`。页面不接受手填合约地址。
+纯静态操作页面位于 [`frontend/`](frontend/)，使用本地打包的 ethers v6 和浏览器钱包调用 TimeLock。无需构建、域名或后端。顶部可选择 BSC 主网（56，默认）、BSC 测试网（97）和本地 Anvil（31337）。三个网络的地址均已配置在 [`frontend/config.js`](frontend/config.js)，主网为 `0xDa8C53c3b3E033cF6f3CDD63eaB0F533D2A80bEA`。页面不接受手填合约地址。
 
 本地运行：
 

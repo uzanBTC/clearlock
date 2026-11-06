@@ -1,5 +1,5 @@
-// TimeLock addresses are deployment configuration. Set mainnet only after
-// deploying and verifying the address on chain ID 56.
+// TimeLock addresses are deployment configuration. Mainnet deployment details
+// and bytecode verification are recorded in deployments/mainnet.md.
 const APP_CONFIG = {
     defaultNetwork: "mainnet",
     networks: {
@@ -10,7 +10,7 @@ const APP_CONFIG = {
             chainIdHex: "0x38",
             rpcUrls: ["https://bsc-dataseed.bnbchain.org"],
             nativeCurrency: { name: "BNB", symbol: "BNB", decimals: 18 },
-            contractAddress: "",
+            contractAddress: "0xDa8C53c3b3E033cF6f3CDD63eaB0F533D2A80bEA",
             explorerUrl: "https://bscscan.com",
             explorerName: "BscScan"
         },
